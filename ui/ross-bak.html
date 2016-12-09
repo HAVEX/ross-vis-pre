@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico"> -->
+    <title>CODES VIS</title>
+    <link href="npm/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="style/style.css" rel="stylesheet">
+    <!-- <link href="style/app.css" rel="stylesheet"> -->
+    <style>
+    #mainView > div{
+        float: left;
+        margin-top: 20px;
+    }
+    </style>
+  </head>
+  <body>
+    <div id="timelineView"></div>
+    <div id="mainView"></div>
+
+
+    <script src="npm/jquery/dist/jquery.min.js"></script>
+
+    <script src="npm/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="jam/require.js"></script>
+    <script>
+        require([
+            "p4/io/ajax",
+            "p4/io/parser",
+            "p4/core/datastruct",
+            "p4/core/pipeline",
+            "p4/dataopt/stats",
+            "i2v/charts/scatter",
+            "i2v/charts/column",
+            "i2v/charts/stackedArea",
+            "i2v/colors",
+            "i2v/format"
+        ], function(
+            ajax,
+            dsv,
+            dataStruct,
+            pipeline,
+            stats,
+            scatterPlot,
+            column,
+            stackedArea,
+            Colors,
+            format
+        ) {
+            ajax.getAll([
+                { url: "data/ross-stats-rt-lps.csv", dataType: "text" },
+                { url: "data/ross-stats-gvt-lps-aggr.json", dataType: "json" },
+                { url: "data/ross-stats-gvt-pes.csv", dataType: "text" },
+                { url: "data/ross-stats-gvt-kps.csv", dataType: "text" },
+            ]).then(function(input){
+    
+                var headers = [
+                        'LP_ID', 'KP_ID', 'PE_ID', 'RT', 'GVT',
+                        'events_processed', 'events_rolled_back',
+                        'remote_sends',  'remote_recvs', 'remote_events'
+                    ],
+                    dataTypes = [
+                        'int', 'int', 'int', 'float', 'float',
+                        'int', 'int', 'int', 'int', 'int'
+                    ];
+
+                var lpData = dataStruct({
+                    array:  dsv(input[0], ","),
+                    header: headers,
+                    types: dataTypes,
+                    skip: 1,
+                }).objectArray();
+
+                var peRawData = dataStruct({
+                    array:  dsv(input[2], ","),
+                    header: 'PE_ID,GVT,all_reduce_count,events_aborted,event_ties,fossil_collects,net_events,efficiency'.split(","),
+                    types: ['int', 'float', 'int', 'int', 'int', 'int', 'int', 'float'],
+                    skip: 1,
+                }).objectArray();
+
+                var kpRawData = dataStruct({
+                    array:  dsv(input[3], ","),
+                    header:'KP_ID,PE_ID,GVT,total_rollbacks,secondary_rollbacks'.split(","),
+                    types: ['int', 'int', 'float', 'int', 'int'],
+                    skip: 1,
+                }).objectArray();
+
+                var timeLPData = pipeline().group({
+                    $by: "RT",
+                    GVT: "$min",
+                    events_processed: "$sum",
+                    events_rolled_back: "$sum",
+                    remote_sends: "$sum",
+                    remote_recvs: "$sum",
+                    remote_events: "$sum"
+                })
+                .derive(function(d){
+                    d.RT = d.RT - lpData[0].RT;
+                })
+                .sortBy({RT: 1})
+                (lpData);
+
+                function brushRT(box) {
+
+                    var rtData = timeLPData.filter(function(d){
+                        return d.RT >= box.x[0] && d.RT <= box.x[1];
+                    });
+
+                    if(rtData.length){
+                        var rtDomains = stats.domains(rtData, ["GVT"]);
+                        // console.log(rtDomains, input[1]);
+                        var gvtData = input[1].filter(function(d){
+                            return d.GVT >= rtDomains.GVT[0] && d.GVT <= rtDomains.GVT[1];
+                        });
+
+                        if(gvtData.length) {
+                            gvtChart.update(gvtData);
+                        }
+
+                        showDetailView(rtDomains.GVT);
+
+                    }
+                }
+
+                function brushGVT(box) {
+
+                    showDetailView(box.x);
+                }
+
+                var sac = new stackedArea({
+                    data: timeLPData ,
+                    width: 1000,
+                    height: 150,
+                    container: "timelineView",
+                    vmap: { x: "RT", y: ['events_processed','events_rolled_back']},
+                    label: {x: "Real Time (s)", y: "# Events"},
+                    brush: { x: true, y: false, brushend: brushRT},
+                    padding: {left: 60, bottom: 40, top: 20, right: 30},
+                    // formatX: function(n) { return format('.3s') + "s"; }
+                });
+
+
+                var gvtChart = new stackedArea({
+                    data: input[1],
+                    width: 1000,
+                    height: 300,
+                    container: "timelineView",
+                    label: {x: "Simulated Time (ms)", y: "# Events"},
+                    vmap: { x: "GVT", y: ['events_processed','events_rolled_back']},
+                    brush: { x: true, y: false, brushend: brushGVT },
+                    padding: {left: 60, bottom: 40, top: 30, right: 30},
+                    formatX: function(n) { return format('.3s')(n/1000); }
+                });
+
+                function showDetailView(gvtRange) {
+                    $("#mainView").html("");
+
+                    var peData = pipeline()
+                    .match({
+                        GVT: {$inRange: gvtRange}
+                    })
+                    .group({
+                        $by: "PE_ID",
+                        GVT: "$min",
+                        net_events: "$sum",
+                        efficiency: "$avg"
+                    })
+                    (peRawData);
+
+                    // var scColors = Colors("Set1");
+
+                    var plotPE = new scatterPlot({
+                        width: 320,
+                        height: 300,
+                        data: peData,
+                        vmap: {x: "net_events", y: "efficiency"},
+                        container: "mainView",
+                        color: "#E00",
+                        title: "PE-Level Statistics",
+                        padding: {left: 70, bottom: 40, top: 20, right: 20}
+                    })
+
+
+                    var kpData = pipeline()
+                    .match({
+                        GVT: {$inRange: gvtRange}
+                    })
+                    .group({
+                        $by: "KP_ID",
+                        GVT: "$min",
+                        total_rollbacks: "$sum",
+                        secondary_rollbacks: "$sum"
+                    })
+                    (kpRawData);
+
+
+                    var plotKP = new scatterPlot({
+                        width: 320,
+                        height: 300,
+                        data: kpData,
+                        vmap: {x: "total_rollbacks", y: "secondary_rollbacks"},
+                        container: "mainView",
+                        color: "purple",
+                        title: "KP-Level Statistics",
+                        padding: {left: 70, bottom: 40, top: 20, right: 20}
+                    })
+
+                    var data = pipeline()
+                    .match({
+                        GVT: {$inRange: gvtRange}
+                    })
+                    .group({
+                        $by: "LP_ID",
+                        // GVT: "$min",
+                        events_processed: "$sum",
+                        events_rolled_back: "$sum",
+                        remote_sends: "$sum",
+                        remote_recvs: "$sum",
+                        remote_events: "$sum"
+                    })
+                    (lpData);
+
+                    var plotLP = new scatterPlot({
+                        width: 320,
+                        height: 300,
+                        data: data,
+                        color: "#0A0",
+                        vmap: {x: "events_rolled_back", y: "remote_events"},
+                        container: "mainView",
+                        title: "LP-Level Statistics",
+                        padding: {left: 70, bottom: 40, top: 20, right: 10}
+                    })
+                }
+                // var testdata = pipeline().toColumnArray()(json[0]);
+                // console.log(testdata);
+                //
+                // var domains = stats(json[1], ["events_rolled_back", "network_sends"]);
+                // var splot = new scatterPlot({
+                //     width: 300,
+                //     height: 400,
+                //     data: json[1],
+                //     vmap: {x: "events_rolled_back", y: "network_sends"},
+                //     domain: domains,
+                //     padding: {left: 80, bottom: 40, top: 20, right: 30}
+                // })
+                //
+                // var histData = pipeline()
+                //     // .group({
+                //     //     $by: "events_rolled_back",
+                //     //     count: "$count",
+                //     //     totalnetwork_sends: {network_sends: "$sum"}
+                //     // // })
+                //     .binAggregate({
+                //         events_rolled_back: 5,
+                //         $data: true,
+                //         count: "$count",
+                //         network_sends: "$sum",
+                //         events_processed: "$sum",
+                //
+                //         // select: ["events_rolled_back", "network_sends", "events_processed", ]
+                //     })
+                //     // .derive({
+                //     //     median: "@rangeBegin + (@rangeEnd - @rangeBegin) / 2"
+                //     // })
+                //     (json[1]);
+                //
+                // console.log(histData);
+                // var b = new bar({
+                //     width: 300,
+                //     height: 400,
+                //     data: histData,
+                //     vmap: {size: "count", y: "rangeEnd"},
+                //     domain: stats(histData, ["count", "events_processed", "events_rolled_back", "median", "rangeEnd", "network_sends"]),
+                //     padding: {left: 60, bottom: 30, top: 20, right: 30}
+                // });
+                //
+                // var nestData = histData.map(function(d){return d.data;});
+                // console.log(nestData);
+                //
+                // nestData.forEach(function(d){
+                //     if(!d.length) return;
+                //     var result = pipeline()
+                //         .binAggregate({
+                //             primary_rollbacks: 6,
+                //             count: "$count",
+                //             network_sends: "$sum",
+                //             events_processed: "$sum"
+                //         })(d);
+                //
+                //     var coloum = new column({
+                //         width: 300,
+                //         height: 100,
+                //         data: result,
+                //         vmap: {size: "count", x: "rangeEnd"},
+                //         domain: stats(result, ["count", "events_processed", "events_rolled_back", "median", "rangeEnd", "network_sends"]),
+                //         padding: {left: 60, bottom: 30, top: 20, right: 30}
+                //     });
+                // })
+                // console.log(json[0]);
+
+            })
+        });
+
+    </script>
+
+  </body>
+</html>

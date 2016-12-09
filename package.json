@@ -1,0 +1,36 @@
+{
+  "name": "ROSS-VIS",
+  "version": "0.1.0",
+  "description": "A visual analytics system for analyzing ROSS data and simulator performance",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test/index.js"
+  },
+  "keywords": [
+    "visualization",
+    "visual analytics",
+    "data exploration",
+    "operating system",
+    "visual analysis as a service"
+  ],
+  "author": "Jianping Kelvin Li",
+  "license": "MIT",
+  "dependencies": {
+    "amdefine": "^1.0.0",
+    "body-parser": "~1.13.3",
+    "d3-scale": "^1.0.1",
+    "express": "~4.13.3",
+    "yamljs": "^0.2.7"
+  },
+  "jam": {
+    "packageDir": "ui/jam",
+    "baseUrl": "ui",
+    "dependencies": {
+      "jquery": ">1.4.2",
+      "bootstrap": ">2.3.1"
+    }
+  },
+  "devDependencies": {
+    "jamjs": "^0.2.17"
+  }
+}

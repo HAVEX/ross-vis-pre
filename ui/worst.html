@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico"> -->
+    <title>CODES VIS</title>
+    <link href="npm/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="style/style.css" rel="stylesheet">
+    <!-- <link href="style/app.css" rel="stylesheet"> -->
+    <style>
+
+    #detailView > div{
+        float: left;
+        /*margin-top: 20px;*/
+    }
+    #detailView {
+        clear: both;
+    }
+    #mainView > svg{
+        float: left;
+        margin-top: 20px;
+    }
+
+    .background path {
+      fill: none;
+      stroke: #ddd;
+      shape-rendering: crispEdges;
+    }
+
+    .foreground path {
+      fill: none;
+      stroke: steelblue;
+    }
+
+    .brush .extent {
+      fill-opacity: .3;
+      stroke: #fff;
+      shape-rendering: crispEdges;
+    }
+
+    .axis line,
+    .axis path {
+      fill: none;
+      stroke: #000;
+      shape-rendering: crispEdges;
+    }
+
+    .axis text {
+      text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+      cursor: move;
+    }
+
+    </style>
+  </head>
+  <body>
+    <div id="timelineView"></div>
+    <div id="mainView"></div>
+    <div id="detailView"></div>
+
+    <script src="npm/jquery/dist/jquery.min.js"></script>
+    <script src="jam/require.js"></script>
+    <script>
+    // var dataSet = 'data/df5k_N16_batch2_gvt256_kps256';
+    var dataSet = 'data/df5k_N64_batch8_gvt128_kps16';
+    var numKP = 16;
+        require(["main"], function(main){
+            main(dataSet, numKP);
+        })
+
+    </script>
+
+  </body>
+</html>

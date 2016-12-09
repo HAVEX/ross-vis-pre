@@ -1,0 +1,122 @@
+svg {
+    z-index: 99;
+    position: absolute;
+    user-select: none;
+}
+
+canvas {
+    z-index: 1;
+    position: absolute;
+}
+
+
+.screen-center-div{
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    -webkit-transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%);
+}
+
+.node rect {
+  cursor: move;
+  fill-opacity: 0.9;
+  shape-rendering: crispEdges;
+}
+
+.node text {
+  pointer-events: none;
+  text-shadow: 0 1px 0 #fff;
+}
+
+.link {
+  fill: none;
+  stroke: #aaa;
+  stroke-opacity: 0.4;
+
+}
+
+.link:hover {
+  stroke: #a3a079;
+  stroke-opacity: .8;
+}
+
+#layout-main {
+    margin: 0 10px;
+    /*padding: 30px;*/
+    /*position: relative;*/
+}
+
+#data-preview {
+    position: fixed;
+    bottom: 0;
+}
+
+.table-striped > tbody > tr{
+    cursor: pointer;
+}
+
+.table-striped > tbody > tr:hover {
+    background-color: #e7fafa;
+}
+
+.navbar-nav li.active {
+    border-bottom: 4px solid steelblue;
+    background-color: #e7e7e7;
+}
+
+.config {
+    height: 200px;
+}
+
+/*.ui-state-default {
+    margin: 20px;
+}*/
+/*.navbar-nav li a {
+    color: #222;
+    font-weight: bold;
+    font-size: 20px;
+    display: block;
+    min-width: 100px;
+}*/
+
+
+.nav-icon-mts {
+    background-image: url("/style/img/nav-icon3.png");
+    background-position: left center;
+    margin: 10px;
+    width: 32px;
+    background-size: 32px;
+    background-repeat: no-repeat;
+}
+
+.popover {
+    max-width: 45%;
+}
+
+.nav-icon-coa {
+    background-image: url("/style/img/corr-icon.png");
+    background-position: left center;
+    width: 32px;
+    margin: 10px;
+    background-size: 32px;
+    background-repeat: no-repeat;
+}
+
+.nav-icon-data {
+    background-image: url("/style/img/data-icon.png");
+    background-position: left center;
+    width: 32px;
+    margin: 10px;
+    background-size: 32px;
+    background-repeat: no-repeat;
+}
+
+.form-group {
+    margin-right: 20px;
+}
+
+.form-control-label {
+    text-align: right;
+    vertical-align: middle;
+}

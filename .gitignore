@@ -1,0 +1,4 @@
+node_modules
+jam
+tmp/*
+data/*

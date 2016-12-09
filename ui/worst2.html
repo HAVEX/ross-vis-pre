@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico"> -->
+    <title>CODES VIS</title>
+    <link href="npm/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="style/style.css" rel="stylesheet">
+    <!-- <link href="style/app.css" rel="stylesheet"> -->
+    <style>
+    #mainView > div{
+        float: left;
+        margin-top: 20px;
+    }
+    </style>
+  </head>
+  <body>
+    <div id="timelineView"></div>
+    <div id="mainView"></div>
+
+
+    <script src="npm/jquery/dist/jquery.min.js"></script>
+
+    <script src="npm/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="jam/require.js"></script>
+    <script>
+    var dataSet = 'data/df5k_N64_batch8_gvt128_kps16';
+        require([
+            "p4/io/ajax",
+            "p4/io/parser",
+            "p4/core/datastruct",
+            "p4/core/arrays",
+            "p4/core/pipeline",
+            "p4/dataopt/stats",
+            "i2v/charts/scatter",
+            "i2v/charts/column",
+            "i2v/charts/stackedArea",
+            "i2v/colors",
+            "i2v/format",
+            "d3"
+        ], function(
+            ajax,
+            dsv,
+            dataStruct,
+            arrays,
+            pipeline,
+            stats,
+            scatterPlot,
+            column,
+            stackedArea,
+            Colors,
+            format,
+            d3
+        ) {
+            ajax.getAll([
+                { url: dataSet + "/ross-stats-rt-lps.json ", dataType: "json" },
+                { url: dataSet + "/ross-stats-gvt-lps.json ", dataType: "json" },
+                { url: dataSet + "/ross-stats-gvt-kps.json ", dataType: "json" },
+                { url: dataSet + "/ross-stats-gvt-pes.json ", dataType: "json" },
+                { url: dataSet + "/df5k-worst-eff-routers-kps.txt ", dataType: "text" },
+                { url: dataSet + "/df5k-worst-efficiency-mapping.txt ", dataType: "text" },
+                { url: dataSet + "/ross-stats-evrb-kps.json ", dataType: "json" },
+            ]).then(function(input){
+
+                function nodeLinkGraph(data){
+                    var width = 400,
+                        height = 400;
+
+                    var n = 100,
+                        nodes = data.nodes,
+                        links = data.links.sort(function(a,b){return a.value - b.value;});
+
+
+                    var force = d3.layout.force()
+                        .nodes(nodes)
+                        .links(links)
+                        .size([width, height]);
+
+                    var maxValue = d3.max(links.map(function(l){ return l.value;})),
+                        minValue = d3.min(links.map(function(l){ return l.value;}));
+
+
+                    var linkWidth = d3.scale.linear().domain([minValue, maxValue]).range([0.1,2]);
+                    var linkColor = d3.scale.linear().domain([minValue, maxValue]).range(["#EEE", "#E00"]);
+
+                    // var colorScale = d3.scale.linear().domain([0,15]).range(["#0F0", "#010"]);
+                    var colorScale = d3.scale.category10();
+                    force.linkStrength(function(link) {
+
+                        var strength =  2 ;
+                        if(link.source.PE === link.target.PE) {
+                            strength = 0.5;
+                        }
+                        return strength;
+
+                    })
+                    // force.gravity(0.1);
+                    force.linkDistance(height/2);
+
+                    var svg = d3.select("#mainView").append("svg")
+                        .attr("width", width)
+                        .attr("height", height);
+
+
+                    setTimeout(function() {
+
+                      force.start();
+                      for (var i = n * n; i > 0; --i) force.tick();
+                      force.stop();
+
+                      svg.selectAll("line")
+                          .data(links)
+                        .enter().append("line")
+                          .style("stroke", function(d) { return linkColor(d.value);})
+                          .style("stroke-width", function(d) { return linkWidth(d.value);})
+                          .attr("x1", function(d) { return d.source.x; })
+                          .attr("y1", function(d) { return d.source.y; })
+                          .attr("x2", function(d) { return d.target.x; })
+                          .attr("y2", function(d) { return d.target.y; });
+
+                      svg.selectAll("circle")
+                          .data(nodes)
+                        .enter().append("circle")
+                          .style("fill", function(d){return colorScale(d.LP_type)})
+                          .attr("cx", function(d) { return d.x; })
+                          .attr("cy", function(d) { return d.y; })
+                          .attr("r", 4.5);
+
+                    }, 10);
+                }
+
+                var rtLPData = input[0].map(function(d){
+                    d.all.RT = d.RT;
+                    d.all.GVT = d.GVT;
+                    return d.all;
+                })
+
+                var gvtLPData = input[1].map(function(d){
+                    d.all.GVT = d.GVT;
+                    return d.all;
+                })
+
+                var lpRawData = input[1],
+                    kpRawData= input[2],
+                    peRawData = input[3];
+
+                console.log(input[6]);
+                var routerKP = dataStruct({
+                    array:  dsv(input[4], ","),
+                    header: 'PE_ID,KP_ID,LP_ID,routers_per_kp'.split(","),
+                    types:[ 'int', 'int', 'int', 'int' ],
+                    skip: 1,
+                })
+                .objectArray()
+
+                var routerKP = pipeline()
+                .derive(function(d){
+                    d.KP_ID = d.PE_ID * 16 + d.KP_ID;
+                })
+                .sortBy({KP_ID: -1})
+                (routerKP);
+
+                var lpTypes = dataStruct({
+                    array:  dsv(input[5], ","),
+                    header: ['PE_ID','KP_ID','LP_ID', 'LP_type'],
+                    types: [ 'int', 'int', 'int', 'string' ],
+                    skip: 1,
+                }).objectArray();
+
+                function brushRT(box) {
+
+                    var rtData = rtLPData.filter(function(d){
+                        return d.RT >= box.x[0] && d.RT <= box.x[1];
+                    });
+
+                    if(rtData.length){
+                        var rtDomains = stats.domains(rtData, ["GVT"]);
+                        // console.log(rtDomains, input[1]);
+                        var gvtData = gvtLPData.filter(function(d){
+                            return d.GVT >= rtDomains.GVT[0] && d.GVT <= rtDomains.GVT[1];
+                        });
+
+                        if(gvtData.length) {
+                            gvtChart.update(gvtData);
+                        }
+                        // showDetailView(rtDomains.GVT);
+                    }
+                }
+
+                function brushGVT(box) {
+                    showDetailView(box.x);
+                }
+
+                var sac = new stackedArea({
+                    data: rtLPData ,
+                    width: 1000,
+                    height: 150,
+                    container: "timelineView",
+                    vmap: { x: "RT", y: ['events_processed','events_rolled_back']},
+                    label: {x: "Real Time (s)", y: "# Events"},
+                    brush: { x: true, y: false, brushend: brushRT},
+                    padding: {left: 60, bottom: 40, top: 20, right: 30},
+                    // formatX: function(n) { return format('.3s') + "s"; }
+                });
+                //
+
+                var gvtChart = new stackedArea({
+                    data: gvtLPData,
+                    width: 1000,
+                    height: 300,
+                    container: "timelineView",
+                    label: {x: "Simulated Time (ms)", y: "# Events"},
+                    vmap: { x: "GVT", y: ['events_processed','events_rolled_back']},
+                    brush: { x: true, y: false, brushend: brushGVT },
+                    padding: {left: 60, bottom: 40, top: 30, right: 30},
+                    formatX: function(n) { return format('.3s')(n/1000); }
+                });
+
+                function showDetailView(gvtRange) {
+                    $("#mainView").html("");
+
+                    function filterByGVT(rawData, vmap) {
+                        var colResult = {};
+
+                        var data = rawData.filter(function(d){
+                            return d.GVT >= gvtRange[0] && d.GVT <= gvtRange[1];
+                        });
+
+                        Object.keys(vmap).forEach(function(k, ki){
+                            if(vmap[k] == "efficiency") {
+                                colResult[vmap[k]] = arrays.vectorAvg(data.map(function(d) { return d[vmap[k]]; }));
+                            } else {
+                                colResult[vmap[k]] = arrays.vectorSum(data.map(function(d) { return d[vmap[k]]; }));
+                            }
+                        })
+                        return colResult[vmap.x].map(function(d, i){
+                            var res = {};
+                            res[vmap.x] = colResult[vmap.x][i];
+                            res[vmap.y] = colResult[vmap.y][i];
+                            return res;
+                        })
+
+                    }
+
+                    var vmapPE = {x: "net_events", y: "efficiency"};
+
+                    var plotPE = new scatterPlot({
+                        width: 320,
+                        height: 300,
+                        data: filterByGVT(peRawData, vmapPE),
+                        vmap: vmapPE,
+                        container: "mainView",
+                        color: "#070",
+                        title: "PE-Level Statistics",
+                        padding: {left: 70, bottom: 40, top: 40, right: 20}
+                    })
+
+                    var vmapKP = {x: "total_rollbacks", y: "secondary_rollbacks"};
+                    var resultKP = filterByGVT(kpRawData, vmapKP);
+                    resultKP.forEach(function(d, i){
+                        d.routers_per_kp = routerKP[i].routers_per_kp;
+                    });
+
+                    vmapKP.color = "routers_per_kp";
+
+                    var plotKP = new scatterPlot({
+                        width: 320,
+                        height: 300,
+                        data:  resultKP,
+                        vmap: vmapKP,
+                        container: "mainView",
+                        colors: ["#E00", "#00E"],
+                        colorDomain: ["with router", "no router"],
+                        title: "KP-Level Statistics",
+                        padding: {left: 70, bottom: 40, top: 40, right: 20}
+                    })
+
+                    var vmapLP = {x: "events_rolled_back", y: "remote_events"};
+
+                    var resultLP = filterByGVT(lpRawData, vmapLP);
+
+                    resultLP.forEach(function(d, i){
+                        d.LP_type = lpTypes[i].LP_type;
+                    });
+
+                    vmapLP.color = "LP_type";
+
+                    var plotLP = new scatterPlot({
+                        width: 320,
+                        height: 300,
+                        vmap: vmapLP,
+                        colors: ["green",  "#AA0", "purple"],
+                        colorDomain: ["server", "terminal", "router"],
+                        data:  resultLP,
+                        container: "mainView",
+                        title: "LP-Level Statistics",
+                        padding: {left: 70, bottom: 40, top:40, right: 10}
+                    })
+
+
+                    var peGraphData = input[6].filter(function(d){
+                        return d.GVT >= gvtRange[0] && d.GVT <= gvtRange[1];
+                    });
+
+                    var numPE = peGraphData[0].PE.length,
+                        peComData = [],
+                        graphData = {nodes: [], links: []};
+
+                    for(var i = 0; i < numPE; i++) {
+                        peComData[i] = {};
+
+                        ['server', 'terminal', 'router'].forEach(function(srcLPType, ti){
+                            peComData[i][srcLPType] = {};
+                            graphData.nodes.push({PE: i, LP_type: srcLPType});
+
+                            ['server', 'terminal', 'router'].forEach(function(destLPType, tj){
+                                peComData[i][srcLPType][destLPType] = arrays.vectorSum(peGraphData.map(function(d){
+                                    return d.PE[i][srcLPType][destLPType];
+                                }));
+
+                                peComData[i][srcLPType][destLPType].forEach(function(lv, j){
+                                    graphData.links.push({source: i*3+ti, target: j*3 + tj, value: lv});
+                                })
+                            });
+                        })
+                    }
+
+
+                    //
+                    nodeLinkGraph(graphData);
+                }
+
+            })
+        });
+
+    </script>
+
+  </body>
+</html>
