@@ -1,19 +1,18 @@
 var fs = require("fs"),
-    csv = require("../../i2v/p4/src/io/node-dsv.js"),
-    dataStruct = require('../../i2v/p4/src/core/datastruct'),
-    parser = require('../../i2v/p4/src/io/parser'),
-    pipeline = require('../../i2v/p4/src/core/pipeline'),
-    scale = require('../../i2v/src/metric');
+    csv = require("../../../p4/src/io/node-dsv.js"),
+    dataStruct = require('../../../p4/src/core/datastruct'),
+    parser = require('../../../p4/src/io/parser'),
+    pipeline = require('../../../p4/src/core/pipeline'),
+    scale = require('../../../i2v/src/metric');
 
 var CHUNK_SIZE = 5000000;
-var DATA_DIR = "/home/kelvin/Workspace/CODES/data/ross/",
+var DATASET = process.argv[2] || "/home/kelvin/Workspace/CODES/data/ross/df5k_N64_batch8_gvt128_kps16";
     // DATASET = "df5k_N16_batch2_gvt256_kps256";
-    DATASET = "df5k_N64_batch8_gvt128_kps16";
 // var DATA_DIR = "/storage/datasets/ross/best/";
+var minVT = prcess.argv[3] || 0;
+var maxVT = process.argv[4] || 164854.640625;
 var result = [];
 var VTI = 512;
-var maxVT = 164854.640625;
-var minVT = 0;
 
 var numPE = 64,
     numKP = 4096,
@@ -121,7 +120,7 @@ function processComDataLP() {
     init();
 
     csv.read({
-        filepath  : DATA_DIR + DATASET + '/ross-stats-evrb-pes.csv',
+        filepath  : DATASET + '/ross-stats-evrb-pes.csv',
         skip: 1,
         delimiter : ",",
         // bufferSize: 8 * 1024 * 1024,
@@ -129,9 +128,9 @@ function processComDataLP() {
         onload    : processLine,
         oncomplete: function() {
 
-            fs.writeFile('./data/' +  DATASET +'/ross-stats-evrb-lp-type.json', JSON.stringify(result), function(err) {
+            fs.writeFile('./ross-stats-evrb-lp-type.json', JSON.stringify(result), function(err) {
                 if(err) {return console.log(err);}
-                console.log("The file was saved!");
+                console.log("Saved LP event data: ross-stats-evrb-lp-type.json");
             });
         }
     });
@@ -156,7 +155,7 @@ function processComDataPE() {
     };
 
     csv.read({
-        filepath  : DATA_DIR + DATASET + '/ross-stats-evrb-pes.csv',
+        filepath  : DATASET + '/ross-stats-evrb-pes.csv',
         skip: 1,
         delimiter : ",",
         // bufferSize: 8 * 1024 * 1024,
@@ -164,9 +163,10 @@ function processComDataPE() {
         onload    : processLine2,
         oncomplete: function() {
 
-            fs.writeFile('./data/' +  DATASET +'/ross-stats-evrb-pes.json', JSON.stringify(result), function(err) {
+            fs.writeFile('./ross-stats-evrb-pes.json', JSON.stringify(result), function(err) {
                 if(err) {return console.log(err);}
-                console.log("The file was saved!");
+                console.log("Saved PE event data: ross-stats-evrb-pes.json");
+                processComDataLP();
             });
         }
     });

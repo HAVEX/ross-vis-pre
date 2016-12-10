@@ -1,20 +1,18 @@
 var fs = require("fs"),
-    csv = require("../../i2v/p4/src/io/node-dsv.js"),
-    dataStruct = require('../../i2v/p4/src/core/datastruct'),
-    pipeline = require('../../i2v/p4/src/core/pipeline'),
-    scale = require('../../i2v/src/metric');
+    csv = require("../../../p4/src/io/node-dsv.js"),
+    dataStruct = require('../../../p4/src/core/datastruct'),
+    pipeline = require('../../../p4/src/core/pipeline'),
+    scale = require('../../../i2v/src/metric');
 
 var CHUNK_SIZE = 50000;
-var DATA_DIR = "/home/kelvin/Workspace/CODES/data/ross/",
+var DATASET = process.argv[2] || "/home/kelvin/Workspace/CODES/data/ross/df5k_N64_batch8_gvt128_kps16";
     // DATASET = "df5k_N16_batch2_gvt256_kps256";
-    DATASET = "df5k_N64_batch8_gvt128_kps16";
 // var DATA_DIR = "/storage/datasets/ross/best/";
 var result = [];
 var VTI = 512;
-var maxVT = 164854.640625;
-var minVT = 0;
+var maxVT = process.argv[4] || 165011.453125;
+var minVT = process.argv[3] || 0;
 
-maxVT = 165011.453125;
 
 var vtScale = scale({
     domain: [minVT, maxVT],
@@ -99,16 +97,16 @@ function groupByLP() {
     init(features);
 
     csv.read({
-        filepath  :DATA_DIR + DATASET  + '/ross-stats-gvt-lps.csv',
+        filepath  :DATASET  + '/ross-stats-gvt-lps.csv',
         // skip: 0,
         delimiter : ",",
         // bufferSize: 8 * 1024 * 1024,
         onload    : processData(headers, dataTypes, features),
         oncomplete: function() {
 
-            fs.writeFile('./data/' +  DATASET +'/ros-stats-gvt-lps.json', JSON.stringify(result), function(err) {
+            fs.writeFile('./ros-stats-gvt-lps.json', JSON.stringify(result), function(err) {
                 if(err) {return console.log(err);}
-                console.log("The file was saved!");
+                console.log("Saved LP data in ./ross-stats-gvt-lps.json");
             });
         }
     });
@@ -127,16 +125,17 @@ function groupByKP() {
     init(features);
 
     csv.read({
-        filepath  : DATA_DIR + DATASET + '/ross-stats-gvt-kps.csv',
+        filepath  : DATASET + '/ross-stats-gvt-kps.csv',
         skip: 1,
         delimiter : ",",
         // bufferSize: 8 * 1024 * 1024,
         onload    : processData(headers, dataTypes, features),
         oncomplete: function() {
 
-            fs.writeFile('./data/' +  DATASET +'/ross-stats-gvt-kps.json', JSON.stringify(result), function(err) {
+            fs.writeFile('./ross-stats-gvt-kps.json', JSON.stringify(result), function(err) {
                 if(err) {return console.log(err);}
-                console.log("The file was saved!");
+                console.log("Saved KP data in ./ross-stats-gvt-kps.json");
+                groupByLP();
             });
         }
     });
@@ -151,19 +150,20 @@ function groupByPE() {
     init(features);
 
     csv.read({
-        filepath  : DATA_DIR + DATASET + '/ross-stats-gvt-pes.csv',
+        filepath  : DATASET + '/ross-stats-gvt-pes.csv',
         skip: 1,
         delimiter : ",",
         // bufferSize: 8 * 1024 * 1024,
         onload    : processData(headers, dataTypes, features),
         oncomplete: function() {
             console.log(result.length);
-            fs.writeFile('./data/' +  DATASET +'/ross-stats-gvt-pes.json', JSON.stringify(result), function(err) {
+            fs.writeFile('./ross-stats-gvt-pes.json', JSON.stringify(result), function(err) {
                 if(err) {return console.log(err);}
-                console.log("The file was saved!");
+                console.log("Saved PE data in ./ross-stats-gvt-pes.json");
+                groupByKP();
             });
         }
     });
 }
 
-groupByLP();
+groupByPE();
