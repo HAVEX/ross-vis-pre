@@ -18,17 +18,16 @@
   "dependencies": {
     "amdefine": "^1.0.0",
     "body-parser": "~1.13.3",
-    "d3-scale": "^1.0.1",
+    "bootstrap": ">2.3.1",
+    "d3": "^3.5.17",
     "express": "~4.13.3",
-    "yamljs": "^0.2.7"
+    "jquery": ">1.4.2",
+    "requirejs": "^2.3.2"
   },
   "jam": {
     "packageDir": "ui/jam",
     "baseUrl": "ui",
-    "dependencies": {
-      "jquery": ">1.4.2",
-      "bootstrap": ">2.3.1"
-    }
+    "dependencies": {}
   },
   "devDependencies": {
     "jamjs": "^0.2.17"

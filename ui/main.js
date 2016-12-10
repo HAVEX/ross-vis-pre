@@ -130,10 +130,8 @@ define([
             function showDetailView(gvtRange) {
                 $("#mainView").html("");
                 $("#detailView").html("");
-                console.log(lpRawData);
                 function filterByGVT(rawData, vmap) {
                     var colResult = {};
-                    console.log(gvtRange);
                     var data = rawData.filter(function(d){
                         return d.GVT >= gvtRange[0] && d.GVT <= gvtRange[1];
                     });
@@ -282,7 +280,6 @@ define([
                     //     return {source: i, target: j, value: d}
                     // }));
                 }
-                console.log(peComMatrix);
                 chord({
                     container: "#detailView",
                     width: 350,
