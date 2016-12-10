@@ -3,8 +3,6 @@ var fs = require('fs'),
     express = require('express'),
     bodyParser = require('body-parser'),
     app = express(),
-    // socketio = require('socket.io')(server),
-    //WebSocketServer = require("ws").Server,
     server = require('http').Server(app);
 
 var port = process.env.PORT || 8100,
@@ -27,6 +25,7 @@ var srcDir = {
 app.use("/vui", express.static(srcDir.vui));
 app.use("/i2v", express.static(srcDir.i2v));
 app.use("/p4",  express.static(srcDir.p4));
+app.use("/npm",  express.static('../../node_modules'));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));

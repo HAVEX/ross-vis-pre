@@ -1,4 +1,4 @@
-define(["d3"], function(d3){
+define(function(){
     return function nodeLinkGraph(option){
         var width = option.width || 460,
             height = option.height || 350,

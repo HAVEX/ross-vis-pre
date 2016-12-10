@@ -1,4 +1,4 @@
-define(["d3"], function(d3){
+define(function(){
     return function chord(option) {
         var width = option.width || 800,
             height = option.height || 800,

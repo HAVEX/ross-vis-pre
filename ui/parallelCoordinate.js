@@ -1,4 +1,4 @@
-define(["d3"], function(d3){
+define(function(){
 
     return function parallelCoordinate(option) {
         var margin = option.margin || {top: 30, right: 10, bottom: 10, left: 10},
