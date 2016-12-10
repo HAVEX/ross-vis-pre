@@ -5,7 +5,7 @@ Visual analytics for the ROSS parallel discrete-event simulation engine.
 Installing the software requires setting up the server and configuring the UI.
 The server requires a server-side JavaScript environment which is commonly available in Linux systems. For other OS, please download and install ([NodeJS](https://nodejs.org/en/)).
 
-Use the following command to install all the dependencies:
+To install all the dependencies, go to the project folder and enter the follwing command:
 ```
 npm install
 ```
