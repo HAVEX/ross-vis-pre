@@ -9,19 +9,17 @@ var CHUNK_SIZE = 5000000;
 var DATASET = process.argv[2] || "/home/kelvin/Workspace/CODES/data/ross/df5k_N64_batch8_gvt128_kps16";
     // DATASET = "df5k_N16_batch2_gvt256_kps256";
 // var DATA_DIR = "/storage/datasets/ross/best/";
-var minVT = prcess.argv[3] || 0;
-var maxVT = process.argv[4] || 164854.640625;
+var minVT = process.argv[3] || 0;
+var maxVT = process.argv[4] || 165011.453125;;
+var numPE = process.argv[5] || 64,
+    numKP = process.argv[6] || 4096,
+    numLP = process.argv[7] || 11388;
+
 var result = [];
 var VTI = 512;
 
-var numPE = 64,
-    numKP = 4096,
-    numLP = 11388;
-
 var LPperPE = numLP / numPE,
     KPperPE = numLP / numKP;
-
-maxVT = 165011.453125; //worst case last VT
 
 var vtScale = scale({
     domain: [minVT, maxVT],
