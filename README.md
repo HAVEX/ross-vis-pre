@@ -24,7 +24,7 @@ node prepocessCE.js [Comm_event_data_file] [GVT_min] [GVT_max] [num_PE] [num_KP]
 
 ```
 
-The scripts will generate multiple JSON files which contain the preprocessed data. Please put all the JSON files in a same folder to be used with the UI.
+The scripts will generate multiple JSON files which contain the preprocessed data. Please put all the JSON files in the same folder and enter the folder path in the config file for the UI.
 
 
 ## Configuring the UI
