@@ -1,5 +1,4 @@
 define([
-    "config",
     "p4/io/ajax",
     "p4/io/parser",
     "p4/core/datastruct",
@@ -15,7 +14,6 @@ define([
     "nodeLink",
     "chord"
 ], function(
-    config,
     ajax,
     dsv,
     dataStruct,
@@ -31,9 +29,7 @@ define([
     nodeLinkGraph,
     chord
 ) {
-    var dataset = config.dataset,
-        numKP = config.numKP;
-    return function main() {
+    return function main(dataSet, numKP) {
         ajax.getAll([
             { url: dataSet + "/ross-stats-rt-lps.json ", dataType: "json" },
             { url: dataSet + "/ross-stats-gvt-lps.json ", dataType: "json" },
