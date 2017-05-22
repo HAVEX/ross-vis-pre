@@ -144,5 +144,8 @@ define(function(){
 
             onupdate(result);
         }
+
+        // if(typeof container.parentElement.hideLoading === "function")
+        //     container.parentElement.hideLoading();
   }
 })

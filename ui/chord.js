@@ -74,5 +74,8 @@ define(function(){
             .style("fill", function(d) { return fill(d.source.index); })
             // .style("fill", function(d) { return colorScale(d.source.total_rollbacks); })
             .attr("d", d3.svg.chord().radius(innerRadius));
+
+        // if(typeof container.parentElement.hideLoading === "function")
+        //     container.parentElement.hideLoading();
     }
 })

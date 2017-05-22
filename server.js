@@ -12,20 +12,22 @@ console.log("initializing server ");
 
 // Static files
 app.use(express.static('ui'));
-app.use(express.static('jam'));
 app.use("/data", express.static('data'));
 app.use("/npm", express.static('node_modules'));
 
 // ivastack libs
 var srcDir = {
-    vui: '../../vui/src',
+    vui: '../../vastui/src',
     i2v: '../../i2v/src',
-    p4: '../../p4/src'
+    p4: '../../p4/src',
+    flexgl : '../../flexgl/src'
 }
-app.use("/vui", express.static(srcDir.vui));
+app.use("/vastui", express.static(srcDir.vui));
 app.use("/i2v", express.static(srcDir.i2v));
 app.use("/p4",  express.static(srcDir.p4));
+app.use("/flexgl",  express.static(srcDir.flexgl));
 app.use("/npm",  express.static('../../node_modules'));
+app.use("/semantic", express.static('../semantic'));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
