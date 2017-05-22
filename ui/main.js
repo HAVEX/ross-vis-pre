@@ -77,7 +77,7 @@ define(function(require) {
     views.statistical.showLoading();
     views.communication.showLoading();
 
-    var dataset = config.dataset,
+    var dataSet = config.dataset,
         numKP = config.numKP;
 
     return function main() {
