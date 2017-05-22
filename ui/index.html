@@ -70,9 +70,10 @@
     <script src="npm/requirejs/require.js"></script>
     <script>
     // var dataSet = 'data/df5k_N16_batch2_gvt256_kps256';
-    var dataSet = 'data/df5k_N64_batch8_gvt128_kps16';
-    var numKP = 16;
-        require(["main"], function(main){
+        require(["config", "main"], function(config, main){
+            var dataSet = config.dataset,
+                numKP = config.numKP;
+
             main(dataSet, numKP);
         })
 

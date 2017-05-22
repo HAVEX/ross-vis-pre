@@ -2,10 +2,11 @@
 Visual analytics for the ROSS parallel discrete-event simulation engine.
 
 ## Software Installation
+Installation requires the [ivastack](https://sphere.cs.ucdavis.edu/kelli/ivastack) framework. Please clone and install ivastack first.
 Installing the software requires setting up the server and configuring the UI.
 The server requires a server-side JavaScript environment which is commonly available in Linux systems. For other OS, please download and install ([NodeJS](https://nodejs.org/en/)).
 
-Use the following command to install all the dependencies:
+To install all the dependencies, go to the project folder after cloning the project, and enter the follwing command:
 ```
 npm install
 ```
@@ -23,7 +24,7 @@ node prepocessCE.js [Comm_event_data_file] [GVT_min] [GVT_max] [num_PE] [num_KP]
 
 ```
 
-The scripts will generate multiple JSON files which contain the preprocessed data. Please put all the JSON files in a same folder to be used with the UI.
+The scripts will generate multiple JSON files which contain the preprocessed data. Please put all the JSON files in the same folder and enter the folder path in the config file for the UI.
 
 
 ## Configuring the UI
